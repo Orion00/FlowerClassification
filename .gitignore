@@ -1,3 +1,9 @@
 Data/*
 
 .DS_Store
+
+*.ipynb
+
+*.csv
+
+*.keras
