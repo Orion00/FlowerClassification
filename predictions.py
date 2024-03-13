@@ -136,8 +136,20 @@ print(predicted_classes)
 # Test (Validation) Accuracy 0.487698986975398
 
 # Max Depth 6
-# Train Accuracy 0.7864639884183858
-# Test (Validation) Accuracy 0.5036179450072359
+# Train Accuracy 0.7958740499457112
+# Test (Validation) Accuracy 0.47756874095513746
+
+# Max Depth 7, Min Samples Leaf 5
+# Train Accuracy 0.8613825551936302
+# Test (Validation) Accuracy 0.5007235890014472
+
+# Max Depth 8, Min Samples Leaf 10
+# Train Accuracy 0.8802026782482808
+# Test (Validation) Accuracy 0.5094066570188133
+
+# max Depth 15, Min Samples Leaf 10
+# Train Accuracy 0.9601882012305465
+# Test (Validation) Accuracy 0.5065123010130246
 
 # Flat Data
 # %%
@@ -162,11 +174,11 @@ test_fimages = np.array([np.array(Image.open(img).resize((128, 128))).flatten() 
 assert len(fimages) == len(flabels), "The number of images and labels do not match."
 
 # Split the dataset into training and testing
-X_train, X_test, Y_train, Y_test = train_test_split(fimages, labels, test_size=0.2, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(fimages, flabels, test_size=0.2, random_state=42)
 
 
 # %%
-rf = RandomForestClassifier(max_depth=6)
+rf = RandomForestClassifier(max_depth=15, min_samples_leaf=10,n_jobs=-1,random_state=101)
 rf.fit(X_train, Y_train)
 
 # %%
@@ -174,20 +186,25 @@ preds_train = rf.predict(X_train)
 preds_test = rf.predict(X_test)
 
 # %%
-
-# %%
 def acc(true,predicted):
-    return sum(predicted[:,1] == true['target'])/len(true['target'])
+    return sum(true == predicted)/len(true)
+ #sum(predicted[:,1] == true['target'])/len(true['target'])
 
 # %%
 print("Train Accuracy",acc(Y_train,preds_train))
 print("Test (Validation) Accuracy",acc(Y_test,preds_test))
+
+# %%
 
 # Submission Code
 # %% 
 preds_final = rf.predict(test_fimages)
 
 # %%
-sub = pd.DataFrame(preds_final, columns=["ID","Prediction"])
-#sub['ID'] = [i[23:] for i in sub['ID']]
-sub.to_csv("RandomForest6Depth.csv", index=False)
+sub = pd.DataFrame(columns=["ID","Prediction"])
+sub['ID'] = test_fimage_paths
+sub['ID'] = [i[21:] for i in sub['ID']]
+sub['Prediction'] = preds_final
+sub.to_csv("RandomForest10Depth.csv", index=False)
+
+
