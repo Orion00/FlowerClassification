@@ -162,15 +162,13 @@ my_new_model.fit(
         workers=3,
         validation_steps=1)
 # %%
-# my_new_model.save('imageNet5Epoch.keras')
-# my_new_model = keras.models.load_model("imageNet5Epoch.keras")
+# my_new_model.save('imageNet5EpochTake2.keras')
+#my_new_model = keras.models.load_model("imageNet5Epoch.keras")
 
 
 # %%
-# train_preds = my_new_model.predict(train_generator)
+train_preds = my_new_model.predict(train_generator)
 valid_preds = my_new_model.predict(validation_generator)
-
-
 
 ### Validation
 # %%
@@ -181,7 +179,7 @@ valid_preds_labs = np.argmax(valid_preds, axis=1)
 print("Train Accuracy",accuracy_score(train_labels,test_preds_labs))
 print("Test (Validation) Accuracy",accuracy_score(valid_labels,valid_preds_labs))
 
-
+# %%
 train_eval = my_new_model.evaluate(train_generator)
 validation_eval = my_new_model.evaluate(validation_generator)
 # %%
