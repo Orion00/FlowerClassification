@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 from PIL import Image
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
+from keras.callbacks import EarlyStopping
 
 
 ### Random Forest Classifier
@@ -99,14 +100,16 @@ sub.to_csv("RandomForest10Depth.csv", index=False)
 
 
 
-#### Neural Net Data
+#### Neural Net Data 
 # 1 Epoch
 # Train Accuracy 0.20725588575839443
 # Test (Validation) Accuracy 0.20278099652375434
 
-# 5 Epochs
-# Train Accuracy 0.2068699343882671
-# Test (Validation) Accuracy 0.22479721900347624
+# 5 Epochs (30 minutes, .7 accuracy)
+
+# 10 Epochs, Data augmentation (1+ hour)
+# Train Accuracy 0.8324971053647241
+# Test (Validation) Accuracy 0.7914252607184241
 
 # %%
 images_dir = "Data/training/training/"
@@ -117,6 +120,18 @@ labels['ID'] = labels['ID'].apply(lambda x: os.path.join(images_dir, x))
 
 # Initialize the ImageDataGenerator
 datagen = ImageDataGenerator(rescale=1./255, validation_split=0.25)
+
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.25,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
 
 # Create the training and validation generators
 train_generator = datagen.flow_from_dataframe(
@@ -150,8 +165,8 @@ my_new_model = Sequential()
 #my_new_model.add(ResNet50(include_top=False, pooling='avg', weights=resnet_weights_path))
 my_new_model.add(VGG16(include_top=False, pooling='avg', weights='imagenet',input_shape=(224, 224, 3)))
 my_new_model.add(Dense(units=num_classes, activation='softmax'))
- 
-my_new_model.layers[0].trainable = False
+
+
 my_new_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # %%
@@ -213,7 +228,7 @@ sub['Prediction'] = np.argmax(test_preds, axis=-1)
 sub['Prediction'] = [class_names[label] for label in sub['Prediction']]
 sub['ID'] = [i[21:] for i in sub['ID']]
 
-sub.to_csv("VG116Epoch5.csv", index=False)
+sub.to_csv("VG116Epoch10Try2.csv", index=False)
 
 
 
@@ -253,3 +268,46 @@ model_transfer.fit(train_generator, validation_data=validation_generator, epochs
 # %%
 # model_transfer.save('imageNet2Epoch.keras')
 # model_transfer = keras.models.load_model("imageNet2Epoch.keras")
+
+
+
+
+# Orion's 2 Hour experiment
+
+# %%
+num_classes=5
+
+my_new_model = Sequential()
+#my_new_model.add(ResNet50(include_top=False, pooling='avg', weights=resnet_weights_path))
+my_new_model.add(VGG16(include_top=False, pooling='avg', weights='imagenet',input_shape=(224, 224, 3)))
+my_new_model.add(Flatten())
+my_new_model.add(Dense(512,activation='relu'))
+my_new_model.add(Dense(256,activation='relu'))
+my_new_model.add(Dense(units=num_classes, activation='softmax')) #Prediction Layer
+
+# %%
+my_new_model.layers[0].trainable = False
+
+my_new_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# %%
+early_stopping_callback = EarlyStopping(
+    monitor='val_loss',  # Monitor validation loss
+    patience=2,  # Number of epochs with no improvement after which training will be stopped
+    restore_best_weights=True  # Restore model weights from the epoch with the best value of the monitored quantity
+)
+# %%
+
+my_new_model.fit(
+        train_generator,
+        epochs=20,
+        validation_data=validation_generator,
+        workers=3,
+        validation_steps=1,
+        callbacks=[early_stopping_callback])
+
+# %%
+# my_new_model.save('imageNet10EpochTake2.keras')
+my_new_model = keras.models.load_model("imageNet10EpochTake2.keras")
+
+ # %%
